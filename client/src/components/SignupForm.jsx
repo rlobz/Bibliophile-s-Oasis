@@ -1,10 +1,12 @@
-import { useState } from 'react';
+import React, { useState } from 'react';
 import { Form, Button, Alert } from 'react-bootstrap';
-import { useMutation } from '@apollo/client';
-import { CREATE_USER } from '../utils/mutations';
-import Auth from '../utils/auth';
 
-const SignupForm = (props) => {
+import { useMutation } from "@apollo/client";
+import { ADD_USER } from "../utils/mutations";
+
+import Auth from "../utils/auth";
+
+const SignupForm = () => {
   // set initial form state
   const [userFormData, setUserFormData] = useState({ username: '', email: '', password: '' });
   // set state for form validation
@@ -12,7 +14,8 @@ const SignupForm = (props) => {
   // set state for alert
   const [showAlert, setShowAlert] = useState(false);
 
-  const [createUser, { error, data }] = useMutation(CREATE_USER);
+  const [addUser, { error }] = useMutation(ADD_USER);
+
 
   const handleInputChange = (event) => {
     const { name, value } = event.target;
@@ -32,10 +35,10 @@ const SignupForm = (props) => {
     setValidated(true);
 
     try {
-      const { data } = await createUser({
+      const { data } = await addUser({
         variables: { ...userFormData },
       });
-      Auth.login(data.createUser.token);
+      Auth.login(data.addUser.token);
     } catch (err) {
       console.error(err);
       setShowAlert(true);
@@ -52,9 +55,13 @@ const SignupForm = (props) => {
     <>
       {/* This is needed for the validation functionality above */}
       <Form noValidate validated={validated} onSubmit={handleFormSubmit}>
-        {/* show alert if server response is bad */}
-        <Alert dismissible onClose={() => setShowAlert(false)} show={showAlert} variant='danger'>
-          Something went wrong with your signup!
+        {/* Show alert if server response is bad */}
+        <Alert 
+        dismissible 
+        onClose={() => setShowAlert(false)} 
+        show={showAlert} 
+        variant='danger'>
+        Something went wrong with your signup!
         </Alert>
 
         <Form.Group className='mb-3'>

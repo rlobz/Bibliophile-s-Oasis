@@ -1,4 +1,4 @@
-import { useEffect } from 'react';
+import React from "react";
 import {
   Container,
   Card,
@@ -7,31 +7,23 @@ import {
   Col
 } from 'react-bootstrap';
 
-import { useMutation, useQuery } from '@apollo/client';
-import { QUERY_ACTIVE_USER } from '../utils/queries';
-import { REMOVE_BOOK } from '../utils/mutations';
+import { useQuery, useMutation } from "@apollo/client";
+import { QUERY_ME } from "../utils/queries";
+import { REMOVE_BOOK } from "../utils/mutations";
+import { removeBookId } from "../utils/localStorage";
 
-import Auth from '../utils/auth';
-import { removeBookId } from '../utils/localStorage';
+import Auth from "../utils/auth";
+
 
 const SavedBooks = () => {
-  const { loading, data, refetch } = useQuery(QUERY_ACTIVE_USER);
-  const [removeBook] = useMutation(REMOVE_BOOK);
-  const userData = data?.activeUser || {};
+  const { loading, data } = useQuery(QUERY_ME);
+  const [removeBook, { error }] = useMutation(REMOVE_BOOK);
 
-  useEffect(() => {
-    refetch(); // Trigger refetch on initial render
-  }, [refetch]);
+  const userData = data?.me || {};
 
-  if (loading) {
-    return <h2>Loading Books...</h2>;
-  }
-
-  if (!userData?.username) {
-    return <h4>You must be logged in the view this page.</h4>;
-  }
-
+  // create function that accepts the book's mongo _id value as param and deletes the book from the database
   const handleDeleteBook = async (bookId) => {
+    // get token
     const token = Auth.loggedIn() ? Auth.getToken() : null;
 
     if (!token) {
@@ -39,17 +31,24 @@ const SavedBooks = () => {
     }
 
     try {
-      await removeBook({ variables: { bookId: bookId } });
-      await refetch();
+      const { data } = await removeBook({
+        variables: { bookId },
+      });
+
+      // upon success, remove book's id from localStorage
       removeBookId(bookId);
     } catch (err) {
       console.error(err);
     }
   };
 
+  if (loading) {
+    return <h2>LOADING...</h2>;
+  }
+
   return (
     <>
-      <div fluid="true" className="text-light bg-dark p-5">
+      <div fluid className="text-light bg-dark p-5">
         <Container>
           <h1>Viewing saved books!</h1>
         </Container>
@@ -61,11 +60,14 @@ const SavedBooks = () => {
             : 'You have no saved books!'}
         </h2>
         <Row>
-          {userData.savedBooks.map((book, index) => {
+          {userData.savedBooks.map((book) => {
             return (
-              <Col key={index} md="4">
+              <Col md="4">
                 <Card key={book.bookId} border='dark'>
-                  {book.image ? <Card.Img src={book.image} alt={`The cover for ${book.title}`} variant='top' /> : null}
+                  {book.image ? <Card.Img 
+                  src={book.image} 
+                  alt={`The cover for ${book.title}`} 
+                  variant='top' /> : null}
                   <Card.Body>
                     <Card.Title>{book.title}</Card.Title>
                     <p className='small'>Authors: {book.authors}</p>

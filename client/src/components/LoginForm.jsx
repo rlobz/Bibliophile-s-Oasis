@@ -1,17 +1,26 @@
 // see SignupForm.js for comments
-import { useState } from 'react';
+import React, { useState, useEffect} from 'react';
 import { Form, Button, Alert } from 'react-bootstrap';
 
-import { useMutation } from '@apollo/client';
-import { LOGIN_USER } from '../utils/mutations';
-import Auth from '../utils/auth';
+import { useMutation } from "@apollo/client";
+import { LOGIN_USER } from "../utils/mutations";
 
-const LoginForm = (props) => {
+import Auth from "../utils/auth";
+
+const LoginForm = () => {
   const [userFormData, setUserFormData] = useState({ email: '', password: '' });
-  const [validated, setValidated] = useState(false);
+  const [validated] = useState(false);
   const [showAlert, setShowAlert] = useState(false);
 
-  const [login, { error, data }] = useMutation(LOGIN_USER);
+  const [login, { error }] = useMutation(LOGIN_USER);
+
+  useEffect(() => {
+    if (error) {
+      setShowAlert(true);
+    } else {
+      setShowAlert(false);
+    }
+  }, [error]);
 
   const handleInputChange = (event) => {
     const { name, value } = event.target;
@@ -27,19 +36,18 @@ const LoginForm = (props) => {
       event.preventDefault();
       event.stopPropagation();
     }
-
-    setValidated(true);
-
     try {
       const { data } = await login({
         variables: { ...userFormData },
       });
+
+      console.log(data);
       Auth.login(data.login.token);
-    } catch (err) {
-      console.error(err);
-      setShowAlert(true);
+    } catch (e) {
+      console.error(e);
     }
 
+// Clear form
     setUserFormData({
       username: '',
       email: '',
@@ -50,8 +58,11 @@ const LoginForm = (props) => {
   return (
     <>
       <Form noValidate validated={validated} onSubmit={handleFormSubmit}>
-        <Alert dismissible onClose={() => setShowAlert(false)} show={showAlert} variant='danger'>
-          Something went wrong with your login credentials!
+        <Alert 
+        dismissible onClose={() => setShowAlert(false)} 
+        show={showAlert} 
+        variant='danger'>
+        Something went wrong with your login credentials!
         </Alert>
         <Form.Group className='mb-3'>
           <Form.Label htmlFor='email'>Email</Form.Label>
