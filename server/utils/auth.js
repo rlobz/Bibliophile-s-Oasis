@@ -5,12 +5,11 @@ const secret = 'mysecretsshhhhh';
 const expiration = '2h';
 
 module.exports = {
-  // function for our authenticated routes
-  authMiddleware: function ({ req }) {
-    // allows token to be sent via  req.query or headers
+  authMiddleware: function ({ req }) { // Destructure req from the context object
+    // Allows token to be sent via req.body req.query or headers
     let token = req.query.token || req.headers.authorization;
 
-    // ["Bearer", "<tokenvalue>"]
+    // ["Bearer", "<tokenvalue>"] - If the token is sent via the authorization header, it is extracted from the Bearer scheme. The token value is separated from the Bearer keyword
     if (req.headers.authorization) {
       token = token.split(' ').pop().trim();
     }
@@ -19,7 +18,6 @@ module.exports = {
       return req;
     }
 
-    // verify token and get user data out of it
     try {
       const { data } = jwt.verify(token, secret, { maxAge: expiration });
       req.user = data;
