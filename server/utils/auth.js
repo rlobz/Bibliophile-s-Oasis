@@ -7,7 +7,7 @@ const expiration = '2h';
 module.exports = {
   authMiddleware: function ({ req }) { // Destructure req from the context object
     // Allows token to be sent via req.body req.query or headers
-    let token = req.query.token || req.headers.authorization;
+    let token = req.body.token || req.query.token || req.headers.authorization;
 
     // ["Bearer", "<tokenvalue>"] - If the token is sent via the authorization header, it is extracted from the Bearer scheme. The token value is separated from the Bearer keyword
     if (req.headers.authorization) {
@@ -19,7 +19,7 @@ module.exports = {
     }
 
     try {
-      const { data } = jwt.verify(token, secret, { maxAge: expiration });
+      const { data } = jwt.verify(token, secret, { expiresIn: expiration });
       req.user = data;
     } catch {
       console.log('Invalid token');

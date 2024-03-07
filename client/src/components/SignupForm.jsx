@@ -1,27 +1,18 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { Form, Button, Alert } from 'react-bootstrap';
-
-import { useMutation } from "@apollo/client";
-import { ADD_USER } from "../utils/mutations";
+import { useMutation } from '@apollo/client';
+import { CREATE_USER } from '../utils/mutations';
 import Auth from '../utils/auth';
 
-const SignupForm = () => {
+const SignupForm = (props) => {
   // set initial form state
   const [userFormData, setUserFormData] = useState({ username: '', email: '', password: '' });
   // set state for form validation
-  const [validated] = useState(false);
+  const [validated, setValidated] = useState(false);
   // set state for alert
   const [showAlert, setShowAlert] = useState(false);
 
-  const [addUser, { error }] = useMutation(ADD_USER);
-
-  useEffect(() => {
-    if (error) {
-      setShowAlert(true);
-    } else {
-      setShowAlert(false);
-    }
-  }, [error]);
+  const [createUser, { error, data }] = useMutation(CREATE_USER);
 
   const handleInputChange = (event) => {
     const { name, value } = event.target;
@@ -38,14 +29,16 @@ const SignupForm = () => {
       event.stopPropagation();
     }
 
+    setValidated(true);
+
     try {
-      const { data } = await addUser({
+      const { data } = await createUser({
         variables: { ...userFormData },
       });
-      console.log(data);
-      Auth.login(data.addUser.token);
+      Auth.login(data.createUser.token);
     } catch (err) {
       console.error(err);
+      setShowAlert(true);
     }
 
     setUserFormData({
@@ -59,13 +52,9 @@ const SignupForm = () => {
     <>
       {/* This is needed for the validation functionality above */}
       <Form noValidate validated={validated} onSubmit={handleFormSubmit}>
-        {/* Show alert if server response is bad */}
-        <Alert 
-        dismissible 
-        onClose={() => setShowAlert(false)} 
-        show={showAlert} 
-        variant='danger'>
-        Something went wrong with your signup!
+        {/* show alert if server response is bad */}
+        <Alert dismissible onClose={() => setShowAlert(false)} show={showAlert} variant='danger'>
+          Something went wrong with your signup!
         </Alert>
 
         <Form.Group className='mb-3'>
